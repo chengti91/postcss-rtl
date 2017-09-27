@@ -14,14 +14,14 @@ module.exports = postcss.plugin( 'postcss-rtl', ( options ) => css => {
     options = validateOptions( options )
 
     // collect @keyframes
-    css.walkAtRules( rule => {
+    function parseAtRules(rule) {
         if ( !isKeyframeRule( rule ) ) return
         if ( isKeyframeAlreadyProcessed( rule ) ) return
         if ( isKeyframeSymmetric( rule ) ) return
 
         keyframes.push( rule.params )
         rtlifyKeyframe( rule )
-    } )
+    }
 
     let skip = 0
     // Simple rules (includes rules inside @media-queries)
@@ -46,10 +46,13 @@ module.exports = postcss.plugin( 'postcss-rtl', ( options ) => css => {
                     break
             }
         }
+        if ( skip-- > 0 ) return
+        if (node.type === 'atrules') {
+            parseAtRules(node);
+        }
         if ( node.type !== 'rule' ) {
             return
         }
-        if ( skip-- > 0 ) return
         const rule = node
 
         if ( isSelectorHasDir( rule.selector, options ) ) return
